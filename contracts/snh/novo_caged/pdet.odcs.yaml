@@ -39,11 +39,59 @@ schema:
   properties:
   - name: competenciamov
     logicalType: string
+  - name: regiao
+    logicalType: string
+  - name: uf
+    logicalType: string
+  - name: municipio
+    logicalType: string
   - name: secao
     logicalType: string
   - name: subclasse
     logicalType: string
   - name: saldomovimentacao
+    logicalType: string
+  - name: cbo2002ocupacao
+    logicalType: string
+  - name: categoria
+    logicalType: string
+  - name: graudeinstrucao
+    logicalType: string
+  - name: idade
+    logicalType: string
+  - name: horascontratuais
+    logicalType: string
+  - name: racacor
+    logicalType: string
+  - name: sexo
+    logicalType: string
+  - name: tipoempregador
+    logicalType: string
+  - name: tipoestabelecimento
+    logicalType: string
+  - name: tipomovimentacao
+    logicalType: string
+  - name: tipodedeficiencia
+    logicalType: string
+  - name: indtrabintermitente
+    logicalType: string
+  - name: indtrabparcial
+    logicalType: string
+  - name: salario
+    logicalType: string
+  - name: tamestabjan
+    logicalType: string
+  - name: indicadoraprendiz
+    logicalType: string
+  - name: origemdainformacao
+    logicalType: string
+  - name: competenciadec
+    logicalType: string
+  - name: indicadordeforadoprazo
+    logicalType: string
+  - name: unidadesalariocodigo
+    logicalType: string
+  - name: valorsalariofixo
     logicalType: string
 - name: novo_caged_pdet_for
   physicalName: novo_caged_pdet_for
@@ -65,11 +113,59 @@ schema:
   properties:
   - name: competenciamov
     logicalType: string
+  - name: regiao
+    logicalType: string
+  - name: uf
+    logicalType: string
+  - name: municipio
+    logicalType: string
   - name: secao
     logicalType: string
   - name: subclasse
     logicalType: string
   - name: saldomovimentacao
+    logicalType: string
+  - name: cbo2002ocupacao
+    logicalType: string
+  - name: categoria
+    logicalType: string
+  - name: graudeinstrucao
+    logicalType: string
+  - name: idade
+    logicalType: string
+  - name: horascontratuais
+    logicalType: string
+  - name: racacor
+    logicalType: string
+  - name: sexo
+    logicalType: string
+  - name: tipoempregador
+    logicalType: string
+  - name: tipoestabelecimento
+    logicalType: string
+  - name: tipomovimentacao
+    logicalType: string
+  - name: tipodedeficiencia
+    logicalType: string
+  - name: indtrabintermitente
+    logicalType: string
+  - name: indtrabparcial
+    logicalType: string
+  - name: salario
+    logicalType: string
+  - name: tamestabjan
+    logicalType: string
+  - name: indicadoraprendiz
+    logicalType: string
+  - name: origemdainformacao
+    logicalType: string
+  - name: competenciadec
+    logicalType: string
+  - name: indicadordeforadoprazo
+    logicalType: string
+  - name: unidadesalariocodigo
+    logicalType: string
+  - name: valorsalariofixo
     logicalType: string
 - name: novo_caged_pdet_exc
   physicalName: novo_caged_pdet_exc
@@ -91,9 +187,61 @@ schema:
   properties:
   - name: competenciamov
     logicalType: string
+  - name: regiao
+    logicalType: string
+  - name: uf
+    logicalType: string
+  - name: municipio
+    logicalType: string
   - name: secao
     logicalType: string
   - name: subclasse
     logicalType: string
   - name: saldomovimentacao
+    logicalType: string
+  - name: cbo2002ocupacao
+    logicalType: string
+  - name: categoria
+    logicalType: string
+  - name: graudeinstrucao
+    logicalType: string
+  - name: idade
+    logicalType: string
+  - name: horascontratuais
+    logicalType: string
+  - name: racacor
+    logicalType: string
+  - name: sexo
+    logicalType: string
+  - name: tipoempregador
+    logicalType: string
+  - name: tipoestabelecimento
+    logicalType: string
+  - name: tipomovimentacao
+    logicalType: string
+  - name: tipodedeficiencia
+    logicalType: string
+  - name: indtrabintermitente
+    logicalType: string
+  - name: indtrabparcial
+    logicalType: string
+  - name: salario
+    logicalType: string
+  - name: tamestabjan
+    logicalType: string
+  - name: indicadoraprendiz
+    logicalType: string
+  - name: origemdainformacao
+    logicalType: string
+  - name: competenciadec
+    logicalType: string
+  - name: competenciaexc
+    logicalType: string
+  - name: indicadordeexclusao
+    logicalType: string
+  - name: indicadordeforadoprazo
+    logicalType: string
+  - name: unidadesalariocodigo
+    logicalType: string
+  - name: valorsalariofixo
     logicalType: string

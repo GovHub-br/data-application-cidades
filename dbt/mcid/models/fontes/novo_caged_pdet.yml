@@ -24,9 +24,33 @@ sources:
       dag: novo_caged_pdet_ingest_dag
     columns:
     - name: competenciamov
+    - name: regiao
+    - name: uf
+    - name: municipio
     - name: secao
     - name: subclasse
     - name: saldomovimentacao
+    - name: cbo2002ocupacao
+    - name: categoria
+    - name: graudeinstrucao
+    - name: idade
+    - name: horascontratuais
+    - name: racacor
+    - name: sexo
+    - name: tipoempregador
+    - name: tipoestabelecimento
+    - name: tipomovimentacao
+    - name: tipodedeficiencia
+    - name: indtrabintermitente
+    - name: indtrabparcial
+    - name: salario
+    - name: tamestabjan
+    - name: indicadoraprendiz
+    - name: origemdainformacao
+    - name: competenciadec
+    - name: indicadordeforadoprazo
+    - name: unidadesalariocodigo
+    - name: valorsalariofixo
   - name: novo_caged_pdet_for
     description: Declarações fora do prazo (competências anteriores), seção F (construção).
     meta:
@@ -36,9 +60,33 @@ sources:
       dag: novo_caged_pdet_ingest_dag
     columns:
     - name: competenciamov
+    - name: regiao
+    - name: uf
+    - name: municipio
     - name: secao
     - name: subclasse
     - name: saldomovimentacao
+    - name: cbo2002ocupacao
+    - name: categoria
+    - name: graudeinstrucao
+    - name: idade
+    - name: horascontratuais
+    - name: racacor
+    - name: sexo
+    - name: tipoempregador
+    - name: tipoestabelecimento
+    - name: tipomovimentacao
+    - name: tipodedeficiencia
+    - name: indtrabintermitente
+    - name: indtrabparcial
+    - name: salario
+    - name: tamestabjan
+    - name: indicadoraprendiz
+    - name: origemdainformacao
+    - name: competenciadec
+    - name: indicadordeforadoprazo
+    - name: unidadesalariocodigo
+    - name: valorsalariofixo
   - name: novo_caged_pdet_exc
     description: Exclusões de movimentações já divulgadas, seção F (construção).
     meta:
@@ -48,6 +96,32 @@ sources:
       dag: novo_caged_pdet_ingest_dag
     columns:
     - name: competenciamov
+    - name: regiao
+    - name: uf
+    - name: municipio
     - name: secao
     - name: subclasse
     - name: saldomovimentacao
+    - name: cbo2002ocupacao
+    - name: categoria
+    - name: graudeinstrucao
+    - name: idade
+    - name: horascontratuais
+    - name: racacor
+    - name: sexo
+    - name: tipoempregador
+    - name: tipoestabelecimento
+    - name: tipomovimentacao
+    - name: tipodedeficiencia
+    - name: indtrabintermitente
+    - name: indtrabparcial
+    - name: salario
+    - name: tamestabjan
+    - name: indicadoraprendiz
+    - name: origemdainformacao
+    - name: competenciadec
+    - name: competenciaexc
+    - name: indicadordeexclusao
+    - name: indicadordeforadoprazo
+    - name: unidadesalariocodigo
+    - name: valorsalariofixo
