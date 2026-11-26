@@ -7,8 +7,9 @@
         {{ depende_de(['ouro_x', 'ouro_y']) }}
 
     O `ref()` registra a dependência já no parse; a macro não escreve nada no SQL. Model
-    novo no recorte do teste entra na lista. Esquecer não quebra o teste, que continua
-    olhando a tabela, mas ele pode rodar antes dela e conferir a versão anterior.
+    novo no recorte do teste entra na lista: sem ele, o teste pode rodar antes da tabela e
+    conferir a versão anterior. O tests/test_cosmos_grupos.py compara cada lista com o
+    recorte calculado do grafo e falha quando falta ou sobra model.
 
     Com DOIS ou mais pais, o Cosmos põe o teste numa task própria, depois de todos, e a
     falha dele não bloqueia nenhum model. Com UM pai só, ele entra na task de teste desse
