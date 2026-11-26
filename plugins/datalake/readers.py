@@ -455,6 +455,86 @@ def tesouro_dotacao_zip(path: str) -> "pd.DataFrame":
     return df
 
 
+# "Orçamento MCid por ação (com data)": 24 dimensions (as in the report header) and the 10
+# metrics, keyed by the Item Informação code of the second header row
+TESOURO_ACAO_DIMENSIONS = {
+    "dia_lancamento": "Dia Lançamento",
+    "acao_governo_codigo": "Ação Governo Código",
+    "acao_governo_nome": "Ação Governo Nome",
+    "programa_governo_codigo": "Programa Governo Código",
+    "programa_governo_nome": "Programa Governo Nome",
+    "fonte_recursos_detalhada_codigo": "Fonte Recursos Detalhada Código",
+    "fonte_recursos_detalhada_nome": "Fonte Recursos Detalhada Nome",
+    "pt": "PT",
+    "ptres": "PTRES",
+    "plano_orcamentario_uo": "Plano Orçamentário Código UO",
+    "plano_orcamentario_funcao": "Plano Orçamentário Código Função",
+    "plano_orcamentario_subfuncao": "Plano Orçamentário Código Subfunção",
+    "plano_orcamentario_programa": "Plano Orçamentário Código Programa",
+    "plano_orcamentario_acao": "Plano Orçamentário Código Ação",
+    "plano_orcamentario_codigo": "Plano Orçamentário Código PO",
+    "plano_orcamentario_nome": "Plano Orçamentário Nome",
+    "ug_executora_codigo": "UG Executora Código",
+    "ug_executora_nome": "UG Executora Nome",
+    "ug_responsavel_codigo": "UG Responsável Código",
+    "ug_responsavel_nome": "UG Responsável Nome",
+    "pi_codigo": "PI Código PI",
+    "pi_nome": "PI Nome",
+    "natureza_despesa_codigo": "Natureza Despesa Código",
+    "natureza_despesa_nome": "Métrica",  # the header cell; the column holds the name
+}
+TESOURO_ACAO_METRICS = {
+    "9": "dotacao_inicial",
+    "13": "dotacao_atualizada",
+    "29": "despesas_empenhadas",
+    "30": "despesas_empenhadas_a_liquidar",
+    "32": "despesas_liquidadas_a_pagar",
+    "34": "despesas_pagas",
+    "50": "restos_a_pagar_inscritos",
+    "52": "restos_a_pagar_pagos",
+    "55": "liquidacoes_totais",
+    "56": "pagamentos_totais",
+}
+TESOURO_ACAO_COLUMNS = [*TESOURO_ACAO_DIMENSIONS, *TESOURO_ACAO_METRICS.values()]
+
+
+@parser("tesouro_orcamento_acao_zip")
+def tesouro_orcamento_acao_zip(path: str) -> "pd.DataFrame":
+    """ "Orçamento MCid por ação (com data)", e-mailed as a ZIP: one UTF-16 TSV.
+
+    Title and filter rows, then a 3-row header: the dimension names, the Item Informação
+    codes and their names. The header is checked before reading by position, so a report
+    edited in the Tesouro Gerencial fails instead of shifting columns. Everything as text:
+    values stay as the report gives them (`4.929.655,57`, `(200,00)`), and `000/2026` in
+    `dia_lancamento` is the opening of the year, with no day.
+    """
+    import csv
+    import io
+    import zipfile
+
+    import pandas as pd
+
+    with zipfile.ZipFile(path) as archive:
+        members = [m for m in archive.namelist() if m.lower().endswith(".csv")]
+        if not members:
+            raise SourceLayoutChanged(f"ZIP without a CSV: {archive.namelist()}")
+        rows = list(
+            csv.reader(io.StringIO(archive.read(members[0]).decode("utf-16")), delimiter="\t")
+        )
+    start = next((i for i, r in enumerate(rows) if r[:1] == ["Dia Lançamento"]), None)
+    if start is None:
+        raise SourceLayoutChanged("no header row starting with 'Dia Lançamento'")
+    n = len(TESOURO_ACAO_DIMENSIONS)
+    names, codes = rows[start][:n], [c.strip() for c in rows[start + 1][n:]]
+    if names != list(TESOURO_ACAO_DIMENSIONS.values()) or codes != list(TESOURO_ACAO_METRICS):
+        raise SourceLayoutChanged(f"header changed: {names} / {codes}")
+    data = [r for r in rows[start + 3 :] if any(c.strip() for c in r)]
+    width = {len(r) for r in data}
+    if width - {len(TESOURO_ACAO_COLUMNS)}:
+        raise SourceLayoutChanged(f"expected {len(TESOURO_ACAO_COLUMNS)} columns, got {width}")
+    return pd.DataFrame(data, columns=TESOURO_ACAO_COLUMNS, dtype=str)
+
+
 def convert(
     minio,
     key: str,

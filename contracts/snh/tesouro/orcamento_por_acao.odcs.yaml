@@ -1,0 +1,108 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: tesouro_orcamento_por_acao
+name: Tesouro Gerencial · Orçamento MCid por ação (com data)
+version: 0.1.0
+status: draft
+description:
+  purpose: Dotação, empenho, liquidação, pagamento e restos a pagar do MCID (órgão UGE 56000) por
+    ação, fonte, plano orçamentário, UG e natureza de despesa, dia a dia no ano corrente, enviados
+    pelo Tesouro Gerencial por e-mail. Cada carga é o ZIP do e-mail do dia, com o ano inteiro
+    até a véspera (carga completa).
+team:
+- username: Tesouro Nacional (Tesouro Gerencial)
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/snh/staging/
+schema:
+- name: orcamento_mcid_por_acao_com_data
+  physicalName: orcamento_mcid_por_acao_com_data
+  description: 'Relatório "Orçamento MCid por ação (com data)": UTF-16, TSV, título e filtro e um
+    cabeçalho de 3 linhas (dimensões, código e nome do Item Informação). Valores no formato do
+    relatório (`4.929.655,57`, negativo entre parênteses); `dia_lancamento` = `000/<ano>` é o
+    lançamento de abertura do ano, sem dia.'
+  customProperties:
+  - property: path
+    value: snh/staging/siafi-tesouro-gerencial/orcamento_mcid_por_acao_com_data/*.parquet
+  - property: file_pattern
+    value: \d{2}_orcamento_mcid_com_data\.zip
+  - property: load_type
+    value: full
+  - property: reader
+    value: tesouro_orcamento_acao_zip
+  - property: dag
+    value: orcamento_mcid_por_acao_com_data_ingest_dag
+  - property: dbt_tables
+    value: []
+  properties:
+  - name: dia_lancamento
+    logicalType: string
+  - name: acao_governo_codigo
+    logicalType: string
+  - name: acao_governo_nome
+    logicalType: string
+  - name: programa_governo_codigo
+    logicalType: string
+  - name: programa_governo_nome
+    logicalType: string
+  - name: fonte_recursos_detalhada_codigo
+    logicalType: string
+  - name: fonte_recursos_detalhada_nome
+    logicalType: string
+  - name: pt
+    logicalType: string
+  - name: ptres
+    logicalType: string
+  - name: plano_orcamentario_uo
+    logicalType: string
+  - name: plano_orcamentario_funcao
+    logicalType: string
+  - name: plano_orcamentario_subfuncao
+    logicalType: string
+  - name: plano_orcamentario_programa
+    logicalType: string
+  - name: plano_orcamentario_acao
+    logicalType: string
+  - name: plano_orcamentario_codigo
+    logicalType: string
+  - name: plano_orcamentario_nome
+    logicalType: string
+  - name: ug_executora_codigo
+    logicalType: string
+  - name: ug_executora_nome
+    logicalType: string
+  - name: ug_responsavel_codigo
+    logicalType: string
+  - name: ug_responsavel_nome
+    logicalType: string
+  - name: pi_codigo
+    logicalType: string
+  - name: pi_nome
+    logicalType: string
+  - name: natureza_despesa_codigo
+    logicalType: string
+  - name: natureza_despesa_nome
+    logicalType: string
+  - name: dotacao_inicial
+    logicalType: string
+  - name: dotacao_atualizada
+    logicalType: string
+  - name: despesas_empenhadas
+    logicalType: string
+  - name: despesas_empenhadas_a_liquidar
+    logicalType: string
+  - name: despesas_liquidadas_a_pagar
+    logicalType: string
+  - name: despesas_pagas
+    logicalType: string
+  - name: restos_a_pagar_inscritos
+    logicalType: string
+  - name: restos_a_pagar_pagos
+    logicalType: string
+  - name: liquidacoes_totais
+    logicalType: string
+  - name: pagamentos_totais
+    logicalType: string
