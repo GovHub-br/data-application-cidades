@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 import pyarrow.parquet as pq
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.sdk import BaseHook, Variable, dag, get_current_context, task
+from airflow.sdk import BaseHook, Variable, dag, get_current_context, task, teardown
 from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 from imap_tools import AND, MailBox
 
@@ -208,7 +208,7 @@ def orcamento_mcid_por_acao_com_data_ingest_dag() -> None:  # noqa: C901 - as ta
                 "ingestão do Tesouro com erro ou quarentena; veja o resumo no log"
             )
 
-    @task(trigger_rule="all_done")
+    @teardown  # roda sempre e não conta para o estado da execução
     def cleanup() -> None:
         shutil.rmtree(_run_dir(), ignore_errors=True)
 
