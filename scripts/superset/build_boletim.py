@@ -52,6 +52,8 @@ from dotenv import load_dotenv
 load_dotenv(pathlib.Path(__file__).resolve().parents[2] / ".env")
 
 MART = "ouro"
+#: CSS do dashboard com a identidade visual Gov Hub (ver o próprio arquivo)
+TEMA = pathlib.Path(__file__).with_name("tema_govhub.css")
 SILVER = "prata"
 
 #: primeira edição oferecida no filtro. Antes disso, as séries mensais
@@ -1070,7 +1072,7 @@ class Superset:
         self.s.post(
             f"{self.base}/login/",
             data={
-                "username": os.environ["SUPERSET_USER"],
+                "username": os.getenv("SUPERSET_USER") or os.environ["SUPERSET_USERNAME"],
                 "password": os.environ["SUPERSET_PASSWORD"],
                 "csrf_token": achado.group(1) if achado else "",
             },
@@ -1423,6 +1425,8 @@ def _payload(api: Superset, por_pagina: dict[int, list[dict]]) -> dict:
         "slug": SLUG,
         "published": True,
         "position_json": monta_layout(por_pagina),
+        # identidade Gov Hub: o tema mora no arquivo, o dashboard só o recebe
+        "css": TEMA.read_text(encoding="utf-8"),
     }
     if dataset_filtro:
         payload["json_metadata"] = json.dumps(
