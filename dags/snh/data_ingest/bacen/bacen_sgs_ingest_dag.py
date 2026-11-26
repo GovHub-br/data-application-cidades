@@ -10,7 +10,7 @@ import pyarrow.parquet as pq
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.http.hooks.http import HttpHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.sdk import Variable, dag, get_current_context, task
+from airflow.sdk import Variable, dag, get_current_context, task, teardown
 from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from plugins.datalake.config import fail_fast_on_missing_config
@@ -202,7 +202,7 @@ def bacen_sgs_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro
                 "ingestão do SGS com erro ou quarentena; veja o resumo no log"
             )
 
-    @task(trigger_rule="all_done")
+    @teardown  # roda sempre e não conta para o estado da execução
     def cleanup() -> None:
         shutil.rmtree(_run_dir(), ignore_errors=True)
 
