@@ -85,22 +85,22 @@ sources:
       - name: geavo_cci_analitico
         description: "Carta de Crédito Individual (CCI) — contratos PF do Canal FGTS/GEAVO. Fonte do 'Financiamento PF MCMV' por faixa do boletim, junto com o CCA."
         meta:
-          caminho: snh/staging/sftp/caixa.geavo/GEAVO/MC20260821__MCidades_CCI_CCA_2026__cci_analitico.parquet
+          caminho: snh/staging/sftp/caixa.geavo/GEAVO/load_id=20261126T143509Z/MC20261119.zip/MCidades_CCI_CCA_2026.mdb/CCI_Analitico.parquet
           linhas_minimas: 1
       - name: geavo_cca_analitico
         description: "Carta de Crédito Associativo (CCA) — contratos PF do Canal FGTS/GEAVO. Complementa o CCI no 'Financiamento PF MCMV' por faixa."
         meta:
-          caminho: snh/staging/sftp/caixa.geavo/GEAVO/MC20260821__MCidades_CCI_CCA_2026__cca_analitico.parquet
+          caminho: snh/staging/sftp/caixa.geavo/GEAVO/load_id=20261126T143509Z/MC20261119.zip/MCidades_CCI_CCA_2026.mdb/CCA_Analitico.parquet
           linhas_minimas: 1
       - name: geavo_fgts_pf
         description: "Base analítica de contratos FGTS pessoa física (GEAVO/Caixa). ~10,8 M linhas."
         meta:
-          caminho: snh/staging/sftp/caixa.geavo/GEAVO/Base_PF_FGTS_20260707.parquet
+          caminho: snh/staging/sftp/caixa.geavo/GEAVO/load_id=20261126T143509Z/Base_PF_FGTS_20261007.zip/Base_PF_FGTS_20261007.parquet
           linhas_minimas: 5409461   # metade do observado em 2026-08-29 (10818923)
       - name: geavo_fgts_pj
         description: "Base de contratos FGTS pessoa jurídica — Apoio à Produção (GEAVO/Caixa)."
         meta:
-          caminho: snh/staging/sftp/caixa.geavo/GEAVO/Base_PJ_FGTS_20260707.parquet
+          caminho: snh/staging/sftp/caixa.geavo/GEAVO/load_id=20261126T143509Z/Base_PJ_FGTS_20261007.zip/Base_PJ_FGTS_20261007.parquet
           linhas_minimas: 9936   # metade do observado em 2026-08-29 (19873)
       - name: ibge_paic_obras
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
