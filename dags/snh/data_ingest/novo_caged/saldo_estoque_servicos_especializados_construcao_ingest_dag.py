@@ -65,7 +65,8 @@ def novo_caged_servicos_especializados_construcao() -> None:  # noqa: C901 - as 
     Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
     """
 
-    @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(minutes=30))
+    # ~75 s por mês no Power BI e a série cresce um mês por mês (34 meses = ~45 min em 11/2026)
+    @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(hours=2))
     @fail_fast_on_missing_config
     def extract() -> list[str]:
         """Cada mês desde jan/2024, como o Power BI responde (Connection `powerbi_caged`).
