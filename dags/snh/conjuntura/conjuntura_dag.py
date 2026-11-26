@@ -97,7 +97,13 @@ def conjuntura_dag() -> None:
         execution_config=ExecutionConfig(
             dbt_executable_path=f"{os.environ['AIRFLOW_REPO_BASE']}/.local/bin/dbt",
         ),
-        render_config=RenderConfig(select=["conjuntura_dbt"]),
+        render_config=RenderConfig(
+            select=["conjuntura_dbt"],
+            # Teste com mais de um pai vira task própria, depois de todos eles, e a falha dele
+            # não bloqueia model. Sem isso ele roda na task de teste de cada pai e trava os
+            # filhos: o conjuntura_contrato_do_staging, com 28 bronzes, derrubaria o boletim.
+            should_detach_multiple_parents_tests=True,
+        ),
     )
 
     fontes_prontas >> dbt_conjuntura

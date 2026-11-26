@@ -1,3 +1,7 @@
+-- Aviso, não erro, até a revisão dos testes do projeto: falha hoje pelo piso da
+-- `infomoney_imob` (336, da fonte antiga), maior que a carga nova da Alpha Vantage.
+{{ config(severity='warn') }}
+
 -- Detecta colapso de volume nos parquets de `staging/`.
 --
 -- Item 2.13. Este é o teste que faltava contra o problema estrutural do

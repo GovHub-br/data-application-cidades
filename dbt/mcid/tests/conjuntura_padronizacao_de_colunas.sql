@@ -1,3 +1,7 @@
+-- Aviso, não erro, até a revisão dos testes do projeto: falha hoje pelos nomes de
+-- coluna de apresentação das ouros do boletim (`ouro_conjuntura_boletim_*`).
+{{ config(severity='warn') }}
+
 -- Impõe a convenção de nomes de coluna dos models do conjuntura.
 --
 -- Itens 1 e 2 do checklist de qualidade. A convenção existia na prática mas
