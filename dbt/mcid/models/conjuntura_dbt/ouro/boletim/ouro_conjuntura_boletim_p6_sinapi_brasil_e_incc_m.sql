@@ -43,8 +43,12 @@ from
                     (extract(year from mes)::int * 12 + extract(month from mes)::int) as m,
                     indice ix,
                     var_mes vm,
-                    var_fonte_no_ano va,
-                    var_fonte_12_meses vd
+                    -- o publicado pela fonte quando há; nos meses estendidos pelo SGS
+                    -- (desde 08/2026) a fonte só dá a variação do mês, e o acumulado
+                    -- sai do índice encadeado (igual ao publicado de 03 a 07/2026 e ao
+                    -- release da FGV de 10/2026)
+                    coalesce(var_fonte_no_ano, round(var_ano * 100, 2)) va,
+                    coalesce(var_fonte_12_meses, round(var_12_meses * 100, 2)) vd
                 from {{ ref('ouro_conjuntura_incc_m') }}
             ),
             ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
