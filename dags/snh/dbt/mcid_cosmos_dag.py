@@ -4,7 +4,7 @@ Um task group só, no target `prod` (dbt-postgres). O SQL de DuckDB do projeto (
 históricos, Reforma Casa Brasil) roda no pg_duckdb, dentro do envelope `duckdb_query()`; o
 resto é SQL de Postgres, que usa as UDFs `normalize_apf` / `parse_date_br` /
 `corrigir_mojibake` criadas pelo `create_udfs()` no on-run-start. Quem lê o lake é o DuckDB
-do banco, com o secret configurado no servidor (infra/playbooks/postgres/README.md).
+do banco, com o secret do lake configurado no servidor.
 
 Até 11/2026 eram dois grupos: Reforma Casa Brasil e Linha Financiada rodavam num target
 próprio (`prod_duckdb`, DuckDB no processo do dbt) e o grupo inteiro esperava o do Postgres.
@@ -13,7 +13,7 @@ upstream_failed, e os testes que ligavam um seed a um model do outro grupo rodav
 tabela existir. Num grupo só, o Cosmos liga as tasks pelo grafo do dbt: uma falha para só o
 que depende dela.
 
-Os models da Reforma Casa Brasil rodam um por vez, no pool `pg_duckdb_pesado`, que o
+Os models da Reforma Casa Brasil rodam um por vez, no pool `pg_duckdb`, que o
 `dbt_project.yml` passa às tasks pelo `meta.cosmos.operator_kwargs`. O resto segue em
 paralelo.
 """

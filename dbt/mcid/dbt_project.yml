@@ -496,7 +496,7 @@ models:
         # linhas) são o maior volume do projeto. O resto do grupo segue em paralelo.
         cosmos:
           operator_kwargs:
-            pool: pg_duckdb_pesado
+            pool: pg_duckdb
       bronze:
         +schema: bronze
         +meta:
