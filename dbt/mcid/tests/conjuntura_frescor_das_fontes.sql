@@ -1,3 +1,9 @@
+-- Aviso, não erro: acusar uma fonte parada não pode travar os modelos que dependem dela
+-- (no cosmos o teste roda depois de cada model referenciado e, se falha, bloqueia os
+-- seguintes; em 26/11/2026 travou o ticket médio e o boletim inteiro por causa do CAGED,
+-- que seria refeito minutos depois na mesma execução).
+{{ config(severity='warn') }}
+
 -- Aponta fontes cujo dado mais recente ficou velho demais para o boletim.
 --
 -- Por que este teste existe: várias fontes do conjuntura NÃO se atualizam

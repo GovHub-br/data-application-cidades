@@ -7,43 +7,45 @@
 -- fora do prazo que chegam depois com aquela competência (FOR) − exclusões (EXC).
 -- Conferido em 26/11/2026 contra o painel: mai/26 total 12.677 e jun/26 14.136, exatos.
 -- Cada linha é uma movimentação, com `saldomovimentacao` = 1 (admissão) ou -1 (desligamento).
+-- Uma agregação só sobre as ~14 M linhas, sem join: o pg_duckdb da homolog tem 1,5 GB e
+-- disco temporário desligado, e um join ou `union` sobre as linhas estoura a memória
+-- ("LocalFileSystem has been disabled"). Cada arquivo do FTP pousa uma vez só (a DAG
+-- pula o que já está na raw), então não há carga repetida para descartar aqui.
 with
-    arquivos as (
-        -- o mesmo arquivo pousado em duas cargas conta uma vez: fica a mais recente
-        select _source_file, max(_load_id) as _load_id
-        from {{ ref('bronze_novo_caged_pdet') }}
-        group by 1
-    ),
-
-    movimentos as (
+    por_divisao as (
         select
-            b.competenciamov::int as competencia,
-            left(b.subclasse::text, 2) as divisao,
-            b.saldomovimentacao::int as movimento,
-            case when b._source_file like 'CAGEDEXC%' then -1 else 1 end as sinal
-        from {{ ref('bronze_novo_caged_pdet') }} b
-        join arquivos a on a._source_file = b._source_file and a._load_id = b._load_id
-        where b.secao = 'F' and b.competenciamov::int >= 202401
+            competenciamov::int as competencia,
+            left(subclasse::text, 2) as divisao,
+            sum(case when saldomovimentacao::int = 1 then sinal else 0 end) as admitidos,
+            sum(case when saldomovimentacao::int = -1 then sinal else 0 end) as desligados,
+            sum(saldomovimentacao::int * sinal) as saldo
+        from
+            (
+                select *, case when _source_file like 'CAGEDEXC%' then -1 else 1 end as sinal
+                from {{ ref('bronze_novo_caged_pdet') }}
+            ) b
+        where secao = 'F' and competenciamov::int >= 202401
+        group by 1, 2
     ),
 
     recortes as (
-        select competencia, 'total' as recorte, movimento, sinal
-        from movimentos
+        select competencia, 'total' as recorte, admitidos, desligados, saldo
+        from por_divisao
         union all
-        select competencia, 'edificios', movimento, sinal
-        from movimentos
+        select competencia, 'edificios', admitidos, desligados, saldo
+        from por_divisao
         where divisao = '41'
         union all
-        select competencia, 'servicos_especializados', movimento, sinal
-        from movimentos
+        select competencia, 'servicos_especializados', admitidos, desligados, saldo
+        from por_divisao
         where divisao = '43'
     )
 
 select
     make_date(floor(competencia / 100)::int, (competencia % 100)::int, 1) as data_referencia,
     recorte,
-    sum(case when movimento = 1 then sinal else 0 end) as admitidos,
-    sum(case when movimento = -1 then sinal else 0 end) as desligados,
-    sum(movimento * sinal) as saldo
+    sum(admitidos) as admitidos,
+    sum(desligados) as desligados,
+    sum(saldo) as saldo
 from recortes
 group by 1, 2
