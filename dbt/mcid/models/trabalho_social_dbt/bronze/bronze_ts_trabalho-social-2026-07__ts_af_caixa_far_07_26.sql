@@ -1,5 +1,5 @@
 select *
 from
     read_parquet(
-        's3://data-lake-mcid/staging/manueal_ts/trabalho-social-2026-07__ts_af_caixa_far_07_26.parquet'
+        's3://data-lake-mcid/snh/staging/manueal_ts/trabalho-social-2026-07__ts_af_caixa_far_07_26.parquet'
     )

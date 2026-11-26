@@ -675,6 +675,12 @@ models:
       openmetadata:
         glossary:
         - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: rotulo_painel
+    description: Rótulo curto do marco para o painel, na forma linha · quando · o que se exige (portaria).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
 - name: prata_ts_empreendimento_perfil
   description: 'Perfil de cada contrato com Trabalho Social para o mapa: coordenadas (SNH), tipo de edificação (INT040/INT059;
     Rural sempre casa), regime, tipo de demanda (FAR) e público tradicional ESTIMADO por palavra-chave no nome da

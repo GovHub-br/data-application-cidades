@@ -45,7 +45,8 @@ models:
     tests:
     - not_null
   - name: marco
-    description: 'Rótulo do marco para o painel: portaria · id · gatilho.'
+    description: 'Rótulo do marco para o painel, na forma linha · quando · o que se exige (portaria). O
+      identificador técnico fica em id_marco.'
     meta:
       openmetadata:
         glossary:

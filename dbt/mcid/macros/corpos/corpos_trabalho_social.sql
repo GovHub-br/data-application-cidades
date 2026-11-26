@@ -504,7 +504,8 @@
         nullif(trim(prazo_dias), '')::integer as prazo_dias,
         nullif(trim(exigencia), '') as exigencia,
         nullif(trim(consequencia_descumprimento), '') as consequencia_descumprimento,
-        trim(referencia) as referencia
+        trim(referencia) as referencia,
+        nullif(trim(rotulo_painel), '') as rotulo_painel
     from marcos
 {% endmacro %}
 
@@ -1222,6 +1223,7 @@
                 m.exigencia,
                 m.consequencia_descumprimento,
                 m.referencia,
+                m.rotulo_painel,
                 -- o gatilho do marco já foi atingido?
                 case
                     m.id_marco
@@ -1279,7 +1281,8 @@
         id_ts || '|' || id_marco as id_alerta,
         id_ts,
         id_marco,
-        portaria_ts || ' · ' || id_marco || ' · ' || gatilho as marco,
+        -- rótulo legível (pedido da UnB): linha · quando · o que se exige (portaria)
+        coalesce(rotulo_painel, portaria_ts || ' · ' || id_marco || ' · ' || gatilho) as marco,
         portaria_ts,
         origem_portaria_ts,
         linha,
