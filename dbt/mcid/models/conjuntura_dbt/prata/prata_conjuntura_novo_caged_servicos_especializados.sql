@@ -1,6 +1,7 @@
 {{ config(materialized='table') }}
 
--- Novo CAGED, serviços especializados para construção (divisão CNAE 43): série mensal desde jan/2024 a partir dos microdados do PDET
+-- Novo CAGED, serviços especializados para construção (divisão CNAE 43): série mensal desde
+-- jan/2024 a partir dos microdados do PDET
 -- (prata_conjuntura_novo_caged_pdet), no lugar do painel Power BI que saiu do ar em 06/2026.
 --
 -- Os microdados não trazem o estoque. Como no painel (estoque = estoque anterior + saldo,

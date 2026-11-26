@@ -21,17 +21,11 @@ with
     ),
 
     ancora as (
-        select mes, indice
-        from sinduscon
-        where indice is not null
-        order by mes desc
-        limit 1
+        select mes, indice from sinduscon where indice is not null order by mes desc limit 1
     ),
 
     sgs as (
-        select
-            to_date(b.data, 'DD/MM/YYYY') as mes,
-            nullif(btrim(b.valor), '')::numeric as var_mes
+        select to_date(b.data, 'DD/MM/YYYY') as mes, nullif(btrim(b.valor), '')::numeric as var_mes
         from {{ ref('bronze_bacen_financiamentos_imobiliarios') }} b
         where
             b.tipo = 'incc_m_var_mes_pct'

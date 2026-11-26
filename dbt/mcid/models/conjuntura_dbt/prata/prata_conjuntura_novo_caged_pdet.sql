@@ -27,9 +27,12 @@ with
     ),
 
     recortes as (
-        select competencia, 'total' as recorte, movimento, sinal from movimentos
+        select competencia, 'total' as recorte, movimento, sinal
+        from movimentos
         union all
-        select competencia, 'edificios', movimento, sinal from movimentos where divisao = '41'
+        select competencia, 'edificios', movimento, sinal
+        from movimentos
+        where divisao = '41'
         union all
         select competencia, 'servicos_especializados', movimento, sinal
         from movimentos
