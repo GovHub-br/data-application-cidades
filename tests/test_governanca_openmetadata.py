@@ -620,7 +620,7 @@ def test_ingestao_roda_na_imagem_e_nao_em_virtualenv() -> None:
     inicializava ali. Na imagem, o conector roda no Airflow da própria task, o
     mesmo que escreveu o banco de metadados.
     """
-    dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
+    dag = (RAIZ / "dags" / "snh" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
     assert "task.virtualenv" not in dag
     (versao,) = _pin_do_pacote_de_ingestao().specifier
     lock = LOCK_DA_IMAGEM.read_text(encoding="utf-8").splitlines()
@@ -628,8 +628,10 @@ def test_ingestao_roda_na_imagem_e_nao_em_virtualenv() -> None:
 
 
 def test_pacote_de_ingestao_acompanha_a_linha_do_servidor() -> None:
-    """Cliente e servidor de linhas diferentes divergem no schema das entidades."""
-    assert str(_pin_do_pacote_de_ingestao().specifier).startswith("==1.13.3")
+    """Cliente e servidor de linhas diferentes divergem no schema das entidades, e o SDK
+    recusa rodar ("Server version is 2.0.7 vs. Client version 1.13"). O servidor está na
+    2.0.7: subiu, suba aqui e rode `make lock`."""
+    assert str(_pin_do_pacote_de_ingestao().specifier).startswith("==2.0.7")
 
 
 def test_pacote_de_ingestao_nao_traz_outro_airflow() -> None:
@@ -741,7 +743,7 @@ def test_governanca_roda_depois_do_conector() -> None:
     domínio, produto e etiqueta sobreviveram; certificação não. A task de
     reaplicação é o que devolve, e tem de ser a ÚLTIMA.
     """
-    dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
+    dag = (RAIZ / "dags" / "snh" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
     assert "reaplicar_governanca" in dag
     assert "sincronizar_governanca.py" in dag
     # a reaplicação é o destino final do encadeamento
@@ -1129,17 +1131,22 @@ def _tabela_da_ouro(nome: str) -> dict:
 def _produtos_gravados(
     monkeypatch, catalogo: dict[str, str], tabelas: list[str]
 ) -> dict[str, list[str]]:
-    """Roda a catalogação com conjuntura, mcmv_historico e reloginho na ouro.
+    """Roda a catalogação com conjuntura e dois produtos sem prefixo na ouro.
 
+    `mcmv_historico` e `reloginho` são produtos de mentira, sem prefixo de tabela (os
+    reais saíram do repositório): o que importa é o caso do produto sem trava de nome.
     Devolve, por tabela, os produtos gravados nela, na ordem do laço.
     """
     monkeypatch.setattr(gov, "produtos_por_modelo", lambda: catalogo)
     monkeypatch.setattr(gov, "camadas_por_modelo", lambda: {})
-    escolhidos = ("conjuntura", "mcmv_historico", "reloginho")
+    conjuntura = next(p for p in DOMINIOS["produtos"] if p["name"] == "conjuntura")
+    sem_prefixo = {k: v for k, v in conjuntura.items() if k not in ("prefixos_de_tabela", "termos")}
     dominios = dict(
         DOMINIOS,
-        produtos=[
-            dict(p, schemas=["ouro"]) for p in DOMINIOS["produtos"] if p["name"] in escolhidos
+        produtos=[dict(conjuntura, schemas=["ouro"])]
+        + [
+            dict(sem_prefixo, name=n, display_name=n, schemas=["ouro"])
+            for n in ("mcmv_historico", "reloginho")
         ],
     )
     om = _OMDoLaco([_tabela_da_ouro(nome) for nome in tabelas])

@@ -6,10 +6,10 @@ import sys
 # Always set, never setdefault: a real .env pulled in by load_dotenv() (e.g.
 # scripts/conversao/config.py) would otherwise point the tests at the real lake and DB.
 TEST_ENV = {
-    "MINIO_ENDPOINT": "minio:9000",
-    "MINIO_ACCESS_KEY": "teste",
-    "MINIO_SECRET_KEY": "teste",
-    "MINIO_BUCKET": "teste",
+    "DL_ENDPOINT": "minio:9000",
+    "DL_ACCESS_KEY": "teste",
+    "DL_SECRET_KEY": "teste",
+    "DL_BUCKET": "teste",
     "DB_DW_HOST_MCID": "postgres",
     "DB_DW_USER_MCID": "teste",
     "DB_DW_PASSWORD_MCID": "teste",

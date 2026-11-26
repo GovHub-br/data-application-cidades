@@ -7,7 +7,7 @@ import yaml
 
 from contratos import gerar_sources
 
-CONTRACTS = sorted(gerar_sources.CONTRACTS.glob("*.odcs.yaml"))
+CONTRACTS = sorted(gerar_sources.CONTRACTS.rglob("*.odcs.yaml"))
 
 
 def test_generated_sources_are_up_to_date():
@@ -36,7 +36,7 @@ def test_each_dataset_is_matched_by_one_object(path):
     assert len(keys) == len(set(keys))
     for obj in contract["schema"]:
         props = gerar_sources.custom(obj)
-        assert props["path"].startswith("staging/") and props["file_pattern"]
+        assert props["path"].startswith("snh/staging/") and props["file_pattern"]
         assert props["load_type"] in ("full", "incremental")
 
 

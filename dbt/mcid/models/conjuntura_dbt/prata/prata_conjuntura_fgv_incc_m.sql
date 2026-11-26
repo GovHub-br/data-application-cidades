@@ -8,6 +8,7 @@
 -- meses da série (1994-1995), onde variação em 12 meses ainda não existe —
 -- sem tratar, o cast quebra com
 -- 'Could not convert string "..." to DECIMAL'.
+-- A bronze guarda todas as cargas; cada carga traz a série inteira, então fica a última.
 select
     mes::date as mes,
     nullif(nullif(indice::text, ''), '...')::numeric as indice,
@@ -15,3 +16,4 @@ select
     nullif(nullif(var_ano::text, ''), '...')::numeric as var_ano,
     nullif(nullif(var_12_meses::text, ''), '...')::numeric as var_12_meses
 from {{ ref('bronze_fgv_incc_m') }}
+where {{ ultima_carga(ref('bronze_fgv_incc_m')) }}

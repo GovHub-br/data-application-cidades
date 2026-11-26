@@ -1,6 +1,6 @@
 """Generate the dbt sources of each contract (ADR-0006: the contract is the source of truth).
 
-`contracts/<source>.odcs.yaml` -> `dbt/mcid/models/fontes/<source>.yml`. The generated
+`contracts/snh/<source>/<name>.odcs.yaml` (one folder per source) -> `dbt/mcid/models/fontes/<id>.yml`. The generated
 file is never edited by hand; `tests/test_contratos.py` fails when it is out of date.
 
     uv run python scripts/contratos/gerar_sources.py
@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS = ROOT / "contracts"
 TARGET = ROOT / "dbt" / "mcid" / "models" / "fontes"
 HEADER = (
-    "# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/{id}.odcs.yaml.\n"
+    "# GERADO por scripts/contratos/gerar_sources.py a partir de {path}.\n"
     "# Não edite: mude o contrato e rode o gerador.\n"
 )
 
@@ -25,7 +25,7 @@ def custom(item: dict) -> dict:
     return {c["property"]: c["value"] for c in item.get("customProperties") or []}
 
 
-def source_yaml(contract: dict) -> str:
+def source_yaml(contract: dict, path: str) -> str:
     bucket = contract["servers"][0]["location"].removeprefix("s3://").split("/")[0]
     owners = [t["username"] for t in contract.get("team") or [] if t.get("role") == "owner"]
     tables = []
@@ -60,7 +60,7 @@ def source_yaml(contract: dict) -> str:
                 "meta": {
                     "bucket": bucket,
                     "camada": "staging",
-                    "contract": f"contracts/{contract['id']}.odcs.yaml",
+                    "contract": path,
                     "owner": owners[0] if owners else None,
                 },
                 "tables": tables,
@@ -68,15 +68,15 @@ def source_yaml(contract: dict) -> str:
         ],
     }
     body = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=100)
-    return HEADER.format(id=contract["id"]) + body
+    return HEADER.format(path=path) + body
 
 
 def generate() -> dict[Path, str]:
     """Generated file -> content, for every contract."""
     out = {}
-    for path in sorted(CONTRACTS.glob("*.odcs.yaml")):
+    for path in sorted(CONTRACTS.rglob("*.odcs.yaml")):
         contract = yaml.safe_load(path.read_text(encoding="utf-8"))
-        out[TARGET / f"{contract['id']}.yml"] = source_yaml(contract)
+        out[TARGET / f"{contract['id']}.yml"] = source_yaml(contract, str(path.relative_to(ROOT)))
     return out
 
 

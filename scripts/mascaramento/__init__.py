@@ -1,4 +1,4 @@
-"""Mascaramento de PII no raw/ do lake. O ponto de entrada é scripts/mascarar_minio.py."""
+"""Mascaramento de PII no snh/raw/ do lake. O ponto de entrada é scripts/mascarar_minio.py."""
 
 import sys
 from pathlib import Path

@@ -1,4 +1,0 @@
-interface:
-  display_name: "MCMV Data Treatment Review"
-  short_description: "Review MCMV treated data quality"
-  default_prompt: "Use $mcmv-review-data-treatment to audit MCMV data treatment row by row and generate evidence reports."

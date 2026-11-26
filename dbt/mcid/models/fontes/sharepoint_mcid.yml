@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sharepoint_mcid.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/sharepoint/mcid.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -8,13 +8,13 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/sharepoint_mcid.odcs.yaml
+    contract: contracts/snh/sharepoint/mcid.odcs.yaml
     owner: MCid · SNH
   tables:
   - name: mcmv_cidades_emendas
     description: Operações beneficiadas por aportes do MCMV Cidades.
     meta:
-      caminho: staging/sharepoint/novo_mcmv_cidades_emendas.parquet
+      caminho: snh/staging/sharepoint/novo_mcmv_cidades_emendas.parquet
       file_pattern: novo_mcmv_cidades_emendas\.csv
       load_type: full
       dag: null
@@ -86,7 +86,7 @@ sources:
   - name: execucao_fundo_social
     description: Dotação e execução da ação 00XF do Fundo Social por unidade gestora.
     meta:
-      caminho: staging/sharepoint/orcamento_resultado_fundo_social.parquet
+      caminho: snh/staging/sharepoint/orcamento_resultado_fundo_social.parquet
       file_pattern: orcamento_resultado_fundo_social\.csv
       load_type: full
       dag: null

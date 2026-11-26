@@ -221,10 +221,10 @@ def _verificar_roundtrip_tabular(
 def mascarar_csv(
     src_path: str, dst_path: str, delim: str, real_encoding: str
 ) -> Tuple[List[dict], int, int]:
-    """Mascara um CSV LOCAL com as mesmas regras e o mesmo HMAC do raw/.
+    """Mascara um CSV LOCAL com as mesmas regras e o mesmo HMAC do snh/raw/.
 
     Para quem converte um formato que este script não consegue reescrever no lugar: o
-    .mdb fica com PII no raw/ (o mdbtools é read-only), então o raw_para_staging mascara
+    .mdb fica com PII no snh/raw/ (o mdbtools é read-only), então o raw_para_staging mascara
     o CSV que o `mdb-export` gera, antes de virar parquet. Mesmo segredo, mesmo token:
     o CPF continua cruzando com as bases mascaradas aqui.
 

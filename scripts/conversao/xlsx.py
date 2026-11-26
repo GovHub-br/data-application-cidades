@@ -7,9 +7,9 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from lake_utils import normalizar_colunas
+from lake_utils import normalize_columns
 
-from .config import LINEAGE_COLS
+from .config import colunas_de_linhagem
 
 
 def _abas_xlsx(src_path: str) -> List[str]:
@@ -29,19 +29,22 @@ def _converter_xlsx_aba(
     source_file: str,
     source_hash: str,
     ingested_at: str,
+    load_id: "str | None" = None,
 ) -> Tuple[int, int, dict]:
     """Converte uma aba para parquet. Retorna (n_linhas, n_colunas, column_map)."""
     df = pd.read_excel(src_path, sheet_name=aba, dtype=str, header=0, engine="openpyxl")
     df = df.fillna("")
     header_original = [str(c) for c in df.columns]
-    nomes_finais, column_map = normalizar_colunas(header_original)
+    nomes_finais, column_map = normalize_columns(header_original)
     df.columns = nomes_finais
     df["_source_file"] = source_file
     df["_ingested_at"] = ingested_at
     df["_source_hash"] = source_hash
+    if load_id:
+        df["_load_id"] = load_id
 
     campos = [pa.field(n, pa.string()) for n in nomes_finais]
-    campos += [pa.field(c, pa.string()) for c in LINEAGE_COLS]
+    campos += [pa.field(c, pa.string()) for c in colunas_de_linhagem(load_id)]
     meta = {
         b"source_file": source_file.encode("utf-8"),
         b"source_hash": source_hash.encode("utf-8"),

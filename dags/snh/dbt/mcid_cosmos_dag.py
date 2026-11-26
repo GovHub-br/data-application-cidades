@@ -1,0 +1,128 @@
+"""DAG do dbt do MCid.
+
+Um DAG, DOIS task groups — porque o projeto tem dois dialetos de SQL:
+
+- far_dbt / fds_dbt / rural_dbt / pro_moradia_dbt / fnhis_dbt / conjuntura_dbt /
+  metadata e as seeds são SQL de
+  Postgres. Usam as UDFs `normalize_apf` / `parse_date_br` / `f_corrigir_mojibake`,
+  criadas pelo `create_udfs()` com CREATE FUNCTION no on-run-start.
+- reforma_casa_brasil_dbt e linha_financiada_dbt são SQL NATIVO do DuckDB: `try_cast(x as tipo)`,
+  `union_by_name = true`, `describe select * from read_parquet(...)`. O parser do
+  Postgres rejeita tudo isso — não é um bug do modelo, é outro motor.
+
+Rodar os dois no mesmo target é impossível sem reescrever um dos lados. Em vez
+disso, cada task group carrega seu próprio ProfileConfig:
+
+    prod          -> Postgres direto
+    prod_duckdb   -> motor DuckDB no processo do dbt, lendo o MinIO e escrevendo
+                     no Postgres atachado como catálogo `cidades`
+
+A ordem importa: as seeds são carregadas no primeiro grupo e lidas pelo segundo
+através do catálogo atachado. (A série histórica do MCMV não está mais aqui: é a
+silver `dados_historicos_dbt`, SQL de DuckDB dentro do envelope duckdb_query(),
+que roda no grupo do Postgres.)
+
+Pré-requisitos no ambiente do Airflow (além do dbt-postgres):
+- `dbt-duckdb` instalado, compatível com o dbt-core (hoje 1.11, com dbt-core 1.12);
+- variáveis do lake — DL_ENDPOINT (host:porta, SEM http://), DL_ACCESS_KEY,
+  DL_SECRET_KEY — visíveis para o worker;
+- um pool chamado `duckdb_historico` com UM slot:
+
+      airflow pools set duckdb_historico 1 "Serializa o eixo historico (lock DuckDB)"
+
+  Sem o pool as tasks falham com "Pool not found"; com mais de um slot elas voltam
+  a colidir no lock do arquivo .duckdb (ver POOL_DUCKDB abaixo).
+"""
+
+import os
+from datetime import datetime
+
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.sdk import DAG
+from cosmos import DbtTaskGroup, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
+from cosmos.constants import DBT_LOG_PATH_ENVVAR
+
+dbt_log_path = "/tmp/dbt_logs"  # NOSONAR
+os.makedirs(dbt_log_path, exist_ok=True)
+os.environ[DBT_LOG_PATH_ENVVAR] = dbt_log_path
+
+REPO_BASE = os.environ["AIRFLOW_REPO_BASE"]
+PROJECT_DIR = f"{REPO_BASE}/dbt/mcid"
+PROFILES_YML = f"{PROJECT_DIR}/profiles.yml"
+
+# O eixo histórico e o resto do projeto são seletores do próprio dbt
+# (dbt/mcid/selectors.yml): `dominios_postgres` é o projeto menos `eixo_historico`,
+# então os dois grupos nunca se sobrepõem nem deixam nó órfão. O `dbt docs
+# generate` da ingestão do OpenMetadata usa o mesmo seletor do grupo Postgres.
+SELETOR_POSTGRES = "dominios_postgres"
+SELETOR_DUCKDB = "eixo_historico"
+
+# O DuckDB nao aceita duas conexoes de ESCRITA no mesmo arquivo. O Cosmos roda uma
+# invocacao de dbt por task, cada uma abrindo sua propria conexao em
+# /tmp/mcid_local.duckdb -- entao duas tasks irmas em paralelo derrubam a segunda
+# com "Could not set lock on file". O --threads do dbt nao resolve: ele limita a
+# concorrencia DENTRO de uma invocacao, e aqui quem paraleliza e o Airflow.
+# Um pool de 1 slot serializa o grupo inteiro. Custa minutos (sao ~25 modelos) e as
+# tres bronzes pesadas da serie executiva ja precisavam rodar sozinhas por memoria.
+POOL_DUCKDB = "duckdb_historico"
+
+# partial_parse LIGADO (padrão). Cheguei a desligá-lo para evitar que um manifest
+# em cache de um target fosse aplicado ao outro — mas isso deixou cada `dbt ls` da
+# renderização lento o bastante para estourar o dagbag_import_timeout, e o risco
+# deixou de existir quando o macros/get_custom_schema.sql passou a rotear schema
+# igual nos três targets de produção: o manifest resolve o mesmo endereço para
+# `prod` e `prod_duckdb`.
+project_config = ProjectConfig(PROJECT_DIR)
+
+execution_config = ExecutionConfig(
+    dbt_executable_path=f"{REPO_BASE}/.local/bin/dbt",
+)
+
+profile_postgres = ProfileConfig(
+    profiles_yml_filepath=PROFILES_YML,
+    profile_name="mcid",
+    target_name="prod",
+)
+
+profile_duckdb = ProfileConfig(
+    profiles_yml_filepath=PROFILES_YML,
+    profile_name="mcid",
+    target_name="prod_duckdb",
+)
+
+with DAG(
+    dag_id="mcid_cosmos_dag",
+    schedule="0 1 * * *",
+    start_date=datetime(2025, 1, 1),
+    catchup=False,
+    # cron e minio_transform_dag disparam esta DAG: duas execuções do dbt ao mesmo tempo
+    # disputam as mesmas tabelas
+    max_active_runs=1,
+    default_args={"retries": 2},
+    doc_md=__doc__,
+) as my_cosmos_dag:
+    dominios_postgres = DbtTaskGroup(
+        group_id="dominios_postgres",
+        project_config=project_config,
+        profile_config=profile_postgres,
+        execution_config=execution_config,
+        render_config=RenderConfig(selector=SELETOR_POSTGRES),
+    )
+
+    eixo_historico = DbtTaskGroup(
+        group_id="eixo_historico",
+        project_config=project_config,
+        profile_config=profile_duckdb,
+        execution_config=execution_config,
+        render_config=RenderConfig(selector=SELETOR_DUCKDB),
+        operator_args={"pool": POOL_DUCKDB},
+    )
+
+    publicar_linhagem_openmetadata = TriggerDagRunOperator(
+        task_id="publicar_linhagem_openmetadata",
+        trigger_dag_id="openmetadata_ingestion_dag",
+        wait_for_completion=False,
+        reset_dag_run=False,
+    )
+
+    dominios_postgres >> eixo_historico >> publicar_linhagem_openmetadata

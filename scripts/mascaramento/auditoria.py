@@ -15,7 +15,7 @@ from .config import (
     SCRIPTS_DIR,
     AUDIT_PREFIX,
     CONTROL_TABLE,
-    MINIO_BUCKET,
+    DL_BUCKET,
     PG_DBNAME,
     PG_HOST,
     PG_PASSWORD,
@@ -130,7 +130,7 @@ def _gravar_auditoria(minio: ClienteMinio, execution_id: str, registros: List[di
     if _LOCAL_ARTIFACTS:
         local = SCRIPTS_DIR / f"auditoria_mascaramento_{execution_id}.parquet"
         df.to_parquet(local, engine="pyarrow", index=False)
-        log.info("Auditoria: s3://%s/%s (cópia local: %s)", MINIO_BUCKET, key, local)
+        log.info("Auditoria: s3://%s/%s (cópia local: %s)", DL_BUCKET, key, local)
     else:
-        log.info("Auditoria: s3://%s/%s", MINIO_BUCKET, key)
+        log.info("Auditoria: s3://%s/%s", DL_BUCKET, key)
     return key

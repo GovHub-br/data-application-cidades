@@ -47,7 +47,7 @@ env:
   - name: AIRFLOW_REPO_BASE
     value: /opt/airflow/dags/repo
   - name: PYTHONPATH
-    value: /opt/airflow/dags/repo/dags:/opt/airflow/dags/repo/plugins:/opt/airflow/dags/repo/helpers:/opt/airflow/dags/repo/scripts
+    value: /opt/airflow/dags/repo:/opt/airflow/dags/repo/dags:/opt/airflow/dags/repo/plugins:/opt/airflow/dags/repo/helpers:/opt/airflow/dags/repo/scripts
   - name: DBT_PROFILES_DIR
     value: /opt/airflow/dags/repo/dbt/mcid
   - name: LAKE_TMPDIR

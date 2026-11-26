@@ -185,32 +185,21 @@ produtos:
   # `empreendimento_far`/`entidades_fds`/`empreendimento_rural` em
   # `test_prefixo_de_tabela_nao_colide_entre_produtos`. A atribuição por
   # tabela fica pendente de decisão de quem introduziu o produto.
-  - name: mcmv_historico
-    display_name: Histórico MCMV
+  - name: dados_historicos
+    display_name: Dados históricos do MCMV
     domain: MCid.Habitacao
     owner_key: mcid_data_engineering
     schemas:
       - bronze
       - prata
-      - ouro
+    prefixos_de_tabela:
+      - bronze_dhist_
+      - prata_dhist_
     description: >
-      Série histórica por empreendimento do MCMV (FAR, FDS e Rural), a partir
-      de arquivos SNH e SFTP anteriores à ingestão corrente, para reconstituir
-      o acompanhamento físico-financeiro fora da janela coberta pelos outros
-      produtos.
-
-  - name: reloginho
-    display_name: Reloginho MCMV
-    domain: MCid.Habitacao
-    owner_key: mcid_data_engineering
-    schemas:
-      - bronze
-      - prata
-      - ouro
-    description: >
-      Indicadores temporais de contratação, entrega e acompanhamento físico
-      do MCMV. O produto é declarado separadamente para que os modelos dbt
-      com governance.product=reloginho sejam catalogados no OpenMetadata.
+      Série histórica do MCMV de 2009 a 2019 (dump do banco antigo) e o painel SNH
+      de 2024 a 2026, reconstruídos pela dados_historicos_dag a partir da raw e
+      levados à silver no dbt, uma silver por família de arquivo, com nomes de
+      coluna canônicos e a frente do MCMV.
 
   - name: reforma_casa_brasil
     display_name: Reforma Casa Brasil
@@ -326,17 +315,19 @@ produtos:
       - prata
       - ouro
     prefixos_de_tabela:
-      - bnz_shpt_mcmv_far_ts_
-      - bnz_shpt_mcmv_fds_ts_
-      - bnz_shpt_mcmv_rural_ts_
-      - bnz_shpt_empreendimentos_sem_indicacao_de_demanda_
-      - bnz_seed_ts_
-      - prt_ts_
+      - bronze_shpt_mcmv_far_ts_
+      - bronze_shpt_mcmv_fds_ts_
+      - bronze_shpt_mcmv_rural_ts_
+      - bronze_shpt_ts_
+      - bronze_ts_
+      - bronze_seed_ts_
+      - bronze_seed_ibge_municipio_centroide
+      - prata_ts_
       - ouro_ts_
     description: >
       Trabalho Social do Minha Casa, Minha Vida no FAR, no Entidades e no Rural, informado pela
-      CAIXA e pelo Banco do Brasil: situação, valores, relatórios atestados, marcos temporais da
-      Portaria MCID 75/2025, indicação de demanda, tipo de demanda e ente executor, com a ação
+      CAIXA e pelo Banco do Brasil: situação, valores, relatórios atestados, marcos temporais das
+      Portarias MCID 464/2018 e 75/2025, indicação de demanda, tipo de demanda e ente executor, com a ação
       sugerida para cada empreendimento fora do marco.
 
 #: Certificação por camada. Gold é o que se publica e se consome; Silver
@@ -367,6 +358,7 @@ etiquetas_automaticas:
     trabalho_social: dbtTags.trabalho_social
     reforma_casa_brasil: dbtTags.reforma_casa_brasil
     linha_financiada: dbtTags.linha_financiada
+    trabalho_social: dbtTags.trabalho_social
   por_camada:
     bronze: dbtTags.bronze
     silver: dbtTags.silver
@@ -485,6 +477,9 @@ classificacoes:
       - name: reforma_casa_brasil
         display_name: Reforma Casa Brasil
         description: Ativo do produto de dados Reforma Casa Brasil.
+      - name: trabalho_social
+        display_name: Trabalho Social
+        description: Ativo do produto de dados Trabalho Social do MCMV.
       - name: bronze
         display_name: Bronze
         description: Ativo da camada que preserva a representação recebida da origem.

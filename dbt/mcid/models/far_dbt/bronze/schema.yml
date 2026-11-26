@@ -957,6 +957,45 @@ models:
         description: Arquivo da staging que venceu esta carga.
         tests:
           - not_null
+  # As séries leem o mesmo padrão de arquivo das bronzes acima (todas as competências em
+  # vez da última), então o contrato de layout é o mesmo: reaproveita a lista.
+
+  - name: bronze_shpt_monit_mov_obra_far_serie
+    description: >
+      Movimento mensal de obra do FAR com todas as competências empilhadas. Cada
+      arquivo é o retrato do mês, uma linha por APF, então a série de execução
+      física só existe empilhando.
+    tests:
+      - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_mov_obra_far_serie
+          arguments:
+            colunas: *colunas_monit_mov_obra_far
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+      - name: filename
+        description: Arquivo da staging de origem da linha; dá a competência.
+        tests:
+          - not_null
+
+  - name: bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa_serie
+    description: >
+      Dados prioritários da CAIXA com todas as competências empilhadas, todas as
+      modalidades. Exclui as remessas HISTORICO_RECENTE_*.
+    tests:
+      - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa_serie
+          arguments:
+            colunas: *colunas_prioritarios_af_caixa
+    columns:
+      - name: filename
+        description: Arquivo da staging de origem da linha; dá a competência.
+        tests:
+          - not_null
+
+
   - name: bronze_seed_manual_far_portaria_selecao_apf
     description: Cópia fiel de seeds.far_portaria_selecao_apf (carregada à mão no Postgres). Portaria de seleção de cada APF
       do MCMV-FAR (727/2023, 704/2024, 47/2025, 488/2025).

@@ -1,0 +1,46 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/abecip/sbpe.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: abecip_sbpe
+  description: Séries mensais da ABECIP usadas na conjuntura. Cada carga é o XLSX da divulgação, com a
+    série inteira (carga completa).
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/snh/abecip/sbpe.odcs.yaml
+    owner: ABECIP
+  tables:
+  - name: financiamentos_modalidade
+    description: Financiamentos SBPE por modalidade (construção e aquisição), em unidades e R$ milhões,
+      mensal desde 2002.
+    meta:
+      caminho: snh/staging/abecip/financiamentos_modalidade/*.parquet
+      file_pattern: financiamentos_modalidade\.xlsx
+      load_type: full
+      dag: abecip_financiamentos_ingest_dag
+    columns:
+    - name: data_referencia
+    - name: unidades_construcao
+    - name: unidades_aquisicao
+    - name: unidades_total
+    - name: valor_construcao_milhoes
+    - name: valor_aquisicao_milhoes
+    - name: valor_total_milhoes
+  - name: poupanca_sbpe_mensal
+    description: 'Caderneta de poupança SBPE: depósitos, retiradas, captação líquida, rendimento e saldo,
+      mensal.'
+    meta:
+      caminho: snh/staging/abecip/poupanca_sbpe_mensal/*.parquet
+      file_pattern: poupanca_sbpe_mensal\.xlsx
+      load_type: full
+      dag: abecip_poupanca_trimestral_ingest_dag
+    columns:
+    - name: data_referencia
+    - name: deposito
+    - name: retirada
+    - name: captacao_liquida_valor
+    - name: captacao_liquida_pct
+    - name: rendimento
+    - name: saldo

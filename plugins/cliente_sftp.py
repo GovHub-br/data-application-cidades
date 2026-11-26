@@ -2,7 +2,6 @@ import errno
 import logging
 import os
 import socket
-import tempfile
 from stat import S_ISDIR
 from typing import Iterator, Optional, Tuple
 
@@ -159,17 +158,3 @@ class ClienteSftp:
                 )
             elif extensoes is None or _extensao(item.filename) in extensoes:
                 yield caminho_completo, item.st_size or 0, item.st_mtime or 0
-
-    def baixar_para_tempfile(self, caminho: str, tmpdir: Optional[str] = None) -> str:
-        """Baixa para disco — evita OOM em arquivos grandes."""
-        if self.sftp is None:
-            raise RuntimeError("SFTP não conectado — chame conectar() primeiro")
-        from pathlib import Path
-
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(caminho).suffix, dir=tmpdir)
-        try:
-            self.sftp.getfo(caminho, tmp)
-            tmp.flush()
-        finally:
-            tmp.close()
-        return tmp.name

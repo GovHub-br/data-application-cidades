@@ -31,7 +31,14 @@
                 from read_parquet('{{ padrao }}', filename => true, union_by_name => true) as arq
             ) as candidatos
         where true {%- for termo in excluir %} and arquivo not like '%{{ termo }}%' {%- endfor %}
-        order by split_part(arquivo, '/', -1) desc
+        -- mesmo nome em cargas diferentes (remessa reenviada, nome fixo): vence a carga
+        -- mais nova (`load_id=` da ingestão nova, ADR-0005), e qualquer carga vence o
+        -- arquivo legado, que não tem a pasta (o split dá ''). split_part e não
+        -- regexp_extract: o Postgres resolve as funções antes de o pg_duckdb executar, e
+        -- regexp_extract só existe no DuckDB
+        order by
+            split_part(arquivo, '/', -1) desc,
+            split_part(split_part(arquivo, 'load_id=', 2), '/', 1) desc
         limit 1
     )
 {%- endmacro %}

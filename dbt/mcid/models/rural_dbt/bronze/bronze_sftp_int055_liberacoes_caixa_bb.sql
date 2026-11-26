@@ -4,7 +4,7 @@
 -- prata filtra PNHR. Nao decompoe o valor por componente. Chega zipado do SFTP e e expandido para
 -- .TXT na entrada.
 -- Fonte: SFTP — sftp/fabrica/GEFUS/ANTERIORES/
-{% set padrao = "s3://data-lake-mcid/staging/**/*INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet" %}
+{% set padrao = "s3://data-lake-mcid/snh/staging/**/*INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet" %}
 
 select *
 from read_parquet('{{ padrao }}', filename => true, union_by_name => true) as r

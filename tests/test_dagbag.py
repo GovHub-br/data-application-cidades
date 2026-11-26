@@ -31,3 +31,7 @@ def test_todas_as_dags_importam(monkeypatch, tmp_path):
         f"{arquivo}:\n{erro}" for arquivo, erro in dagbag.import_errors.items()
     )
     assert dagbag.dags
+    # `cleanup` com all_done como única folha deixava verde a execução cujo extract
+    # falhou; como teardown, ela roda sempre e não conta para o estado da execução
+    cleanups = [d.get_task("cleanup") for d in dagbag.dags.values() if d.has_task("cleanup")]
+    assert cleanups and all(t.is_teardown for t in cleanups)

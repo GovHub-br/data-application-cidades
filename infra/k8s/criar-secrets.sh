@@ -96,6 +96,10 @@ case "${1:-}" in
       echo "ok: cidades-airflow-env já existe"
     else
       env_file="$(mktemp)"
+      dl_endpoint=$(ler cidades-lake endpoint)
+      dl_access=$(ler cidades-lake access_key)
+      dl_secret=$(ler cidades-lake secret_key)
+      dl_bucket=$(ler cidades-lake bucket)
       trap 'rm -f "$env_file"' EXIT
       cat > "$env_file" <<EOF
 DB_DW_HOST_MCID=${PG_HOST}
@@ -104,10 +108,12 @@ DB_DW_DBNAME_MCID=cidades
 DB_DW_USER_MCID=cidades
 DB_DW_PASSWORD_MCID=${dw_pw}
 AIRFLOW_CONN_POSTGRES_DEFAULT=postgresql://cidades:${dw_pw}@${PG_HOST}:5432/cidades
-MINIO_ENDPOINT=$(ler cidades-lake endpoint)
-MINIO_ACCESS_KEY=$(ler cidades-lake access_key)
-MINIO_SECRET_KEY=$(ler cidades-lake secret_key)
-MINIO_BUCKET=$(ler cidades-lake bucket)
+DL_ENDPOINT=${dl_endpoint}
+DL_ACCESS_KEY=${dl_access}
+DL_SECRET_KEY=${dl_secret}
+DL_BUCKET=${dl_bucket}
+AIRFLOW_CONN_LAKE_MCID={"conn_type": "aws", "login": "${dl_access}", "password": "${dl_secret}", "extra": {"endpoint_url": "http://${dl_endpoint}", "region_name": "us-east-1"}}
+AIRFLOW_VAR_LAKE_BUCKET=${dl_bucket}
 EOF
       [ -n "$extra_env" ] && grep -vE '^\s*(#|$)' "$extra_env" >> "$env_file"
       kubectl -n "$NS" create secret generic cidades-airflow-env --from-env-file="$env_file" >/dev/null

@@ -1,0 +1,96 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: tesouro_dotacao_execucao
+name: Tesouro Gerencial (relatório por e-mail)
+version: 0.1.0
+status: draft
+description:
+  purpose: Dotação e execução orçamentária do MCID por outras fontes, enviada pelo Tesouro Gerencial por
+    e-mail. Cada carga são os ZIPs do e-mail do dia, com o relatório inteiro (carga completa).
+team:
+- username: Tesouro Nacional (Tesouro Gerencial)
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/snh/staging/
+schema:
+- name: dotacao_execucao_outras_fontes_mcid
+  physicalName: dotacao_execucao_outras_fontes_mcid
+  description: Relatório de dotação e execução (UTF-16, TSV, 12 linhas de título), um ZIP por anexo.
+  customProperties:
+  - property: path
+    value: snh/staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/*.parquet
+  - property: file_pattern
+    value: \d{2}_.+\.zip
+  - property: load_type
+    value: full
+  - property: reader
+    value: tesouro_dotacao_zip
+  - property: dag
+    value: dotacao_execucao_outras_fontes_mcid_ingest_dag
+  - property: dbt_tables
+    value:
+    - siafi_dotacao_execucao
+  properties:
+  - name: unidade_orcamentaria_codigo
+    logicalType: string
+  - name: unidade_orcamentaria_nome
+    logicalType: string
+  - name: acao_governo_codigo
+    logicalType: string
+  - name: acao_governo_nome
+    logicalType: string
+  - name: programa_governo_codigo
+    logicalType: string
+  - name: programa_governo_nome
+    logicalType: string
+  - name: plano_orcamentario_codigo
+    logicalType: string
+  - name: plano_orcamentario_funcao
+    logicalType: string
+  - name: plano_orcamentario_subfuncao
+    logicalType: string
+  - name: plano_orcamentario_programa
+    logicalType: string
+  - name: plano_orcamentario_acao
+    logicalType: string
+  - name: plano_orcamentario_medida
+    logicalType: string
+  - name: plano_orcamentario_descricao
+    logicalType: string
+  - name: elemento_despesa_codigo
+    logicalType: string
+  - name: elemento_despesa_nome
+    logicalType: string
+  - name: orgao_uge_codigo
+    logicalType: string
+  - name: orgao_uge_nome
+    logicalType: string
+  - name: uge_matriz_filial
+    logicalType: string
+  - name: ug_executora_codigo
+    logicalType: string
+  - name: ug_executora_nome
+    logicalType: string
+  - name: fixacao_despesa_loa
+    logicalType: string
+  - name: dotacao_inicial
+    logicalType: string
+  - name: dotacao_atualizada
+    logicalType: string
+  - name: credito_disponivel
+    logicalType: string
+  - name: despesas_empenhadas
+    logicalType: string
+  - name: despesas_empenhadas_a_liquidar
+    logicalType: string
+  - name: despesas_liquidadas_a_pagar
+    logicalType: string
+  - name: despesas_pagas
+    logicalType: string
+  - name: restos_a_pagar_inscritos
+    logicalType: string
+  - name: restos_a_pagar_pagos
+    logicalType: string

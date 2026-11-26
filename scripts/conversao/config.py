@@ -8,6 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from datalake import keys as lake_keys
 from lake_utils import MDB_EXT
 
 load_dotenv()
@@ -15,10 +16,10 @@ load_dotenv()
 # logs e cópias locais ficam ao lado de raw_para_staging.py, como antes do pacote
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 
-MINIO_ENDPOINT = os.environ["MINIO_ENDPOINT"]
-MINIO_ACCESS_KEY = os.environ["MINIO_ACCESS_KEY"]
-MINIO_SECRET_KEY = os.environ["MINIO_SECRET_KEY"]
-MINIO_BUCKET = os.environ["MINIO_BUCKET"]
+DL_ENDPOINT = os.environ["DL_ENDPOINT"]
+DL_ACCESS_KEY = os.environ["DL_ACCESS_KEY"]
+DL_SECRET_KEY = os.environ["DL_SECRET_KEY"]
+DL_BUCKET = os.environ["DL_BUCKET"]
 
 PG_HOST = os.environ["DB_DW_HOST_MCID"]
 PG_PORT = int(os.environ.get("DB_DW_PORT_MCID", 5432))
@@ -29,9 +30,10 @@ PG_DBNAME = os.environ["DB_DW_DBNAME_MCID"]
 SCHEMA = os.environ.get("LAKE_SCHEMA", "lake")
 CONTROL_TABLE = "_staging_log"
 
-RAW_PREFIX = os.environ.get("MASKING_PREFIX", "raw/")
-STAGING_PREFIX = os.environ.get("STAGING_PREFIX", "staging/")
-AUDIT_PREFIX = "audit/staging/"
+RAW_PREFIX = os.environ.get("MASKING_PREFIX", lake_keys.RAW_PREFIX)
+STAGING_PREFIX = os.environ.get("STAGING_PREFIX", lake_keys.STAGING_PREFIX)
+DRYRUN_PREFIX = f"{lake_keys.LAKE_ROOT}staging_dryrun/"
+AUDIT_PREFIX = f"{lake_keys.LAKE_ROOT}audit/staging/"
 
 TMPDIR = os.environ.get("LAKE_TMPDIR") or os.environ.get("MASKING_TMPDIR") or None
 if TMPDIR:
@@ -49,6 +51,12 @@ SUPORTADAS = SUPPORTED_TABULAR | SUPPORTED_EXCEL | SUPPORTED_MDB | SUPPORTED_JSO
 PASTAS_IGNORADAS = {"dados_historicos"}
 
 LINEAGE_COLS = ["_source_file", "_ingested_at", "_source_hash"]
+
+
+def colunas_de_linhagem(load_id: "str | None") -> list:
+    """`_load_id` só nas cargas com pasta `load_id=` (ADR-0005). No legado a coluna nova
+    quebraria as bronzes que leem vários parquets juntos sem `union_by_name`."""
+    return LINEAGE_COLS + (["_load_id"] if load_id else [])
 
 
 # Artefatos locais (log em arquivo, cópia da auditoria): úteis standalone, mas o diretório

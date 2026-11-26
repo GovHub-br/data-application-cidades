@@ -11,6 +11,7 @@
 -- 4T2025 = 47.766, 1T2026 = 47.609 — e o acumulado de 12 meses até mar/2026
 -- (161.338) também. O `unidades_total` confere com a extração independente
 -- do colega em `staging/abecip/financiamentos_sbpe_mensal.parquet`.
+-- A bronze guarda todas as cargas; cada carga traz a série inteira, então fica a última.
 select
     data_referencia::date as data_referencia,
     extract(year from data_referencia::date)::int as ano,
@@ -21,5 +22,6 @@ select
     valor_construcao_milhoes::numeric as valor_construcao_milhoes,
     valor_aquisicao_milhoes::numeric as valor_aquisicao_milhoes,
     valor_total_milhoes::numeric as valor_total_milhoes,
-    dt_ingest
+    _ingested_at as dt_ingest
 from {{ ref('bronze_abecip_financiamentos') }}
+where {{ ultima_carga(ref('bronze_abecip_financiamentos')) }}

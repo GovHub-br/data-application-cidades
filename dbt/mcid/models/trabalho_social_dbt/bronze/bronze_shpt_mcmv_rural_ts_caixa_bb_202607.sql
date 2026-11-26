@@ -1,0 +1,5 @@
+select *
+from
+    read_parquet(
+        's3://data-lake-mcid/snh/staging/sharepoint/Trabalho Social/MCMV_RURAL_TS_CAIXA_BB_ 202607__ts_af_bb_pnhr_07_26.parquet'
+    )

@@ -52,7 +52,9 @@ MODELOS = RAIZ / "dbt" / "mcid" / "models"
 CATALOGO = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
 #: A macro registra a dependência do model bronze na fonte do lake. Ler a
 #: chamada é ler a declaração — não há SQL compilado nem caminho de dado aqui.
-CHAMADA_FONTE = re.compile(r"(?:fonte_lake|caminho_fonte_lake)\(\s*['\"]([^'\"]+)['\"]")
+#: As bronzes do histórico chamam `bronze_dhist('<família>')`, que envolve o
+#: `fonte_lake` da mesma família. `caminho_fonte_lake(` também casa, pelo sufixo.
+CHAMADA_FONTE = re.compile(r"(?:fonte_lake|bronze_dhist)\(\s*['\"]([^'\"]+)['\"]")
 #: Toda pasta `bronze/` do `dbt_project.yml` declara `+schema: bronze`. É onde
 #: procurar o model que o catálogo semântico ainda não lista: produto novo entra
 #: no dbt antes de entrar no catálogo, e sem isto a linhagem dele falhava.

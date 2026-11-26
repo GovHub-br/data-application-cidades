@@ -14,7 +14,12 @@
     Uso no model bronze:
         select * from {{ fonte_lake('ibge_sinapi') }}
 #}
-{% macro caminho_fonte_lake(nome_tabela, nome_fonte='lake_staging') -%}
+{% macro fonte_lake(
+    nome_tabela,
+    nome_fonte='lake_staging',
+    filename=false,
+    union_by_name=false
+) %}
     {#- registra a dependência no grafo do dbt (o Relation em si não é usado:
         o dado é parquet no object storage, não uma tabela do Postgres) -#}
     {%- set _ = source(nome_fonte, nome_tabela) -%}
@@ -34,25 +39,22 @@
 
         {%- if not caminho.valor -%}
             {{ exceptions.raise_compiler_error(
-                "caminho_fonte_lake: '" ~ nome_tabela ~ "' não tem meta.caminho em sources.yml") }}
+                "fonte_lake: '" ~ nome_tabela ~ "' não tem meta.caminho em sources.yml") }}
         {%- endif -%}
 
-        {%- do return('s3://' ~ bucket ~ '/' ~ caminho.valor) -%}
+        {#- Ingestão nova (ADR-0005): o caminho cobre todas as cargas `load_id=*/`.
+            A bronze guarda todas (a prata escolhe com `ultima_carga()`); cargas de
+            épocas diferentes podem ter colunas diferentes, e a pasta `load_id=` não
+            deve virar coluna (a carga já vem em `_load_id`). -#}
+        {%- set cargas = 'load_id=' in caminho.valor -%}
+        read_parquet(
+            's3://{{ bucket }}/{{ caminho.valor }}'
+            {%- if filename %}, filename => true{% endif -%}
+            {%- if union_by_name or cargas %}, union_by_name => true{% endif -%}
+            {%- if cargas %}, hive_partitioning => false{% endif -%}
+        )
     {%- else -%}
         {#- placeholder só para o parse; nunca chega a ser executado -#}
-        {%- do return('s3://' ~ bucket ~ '/__parse__') -%}
+        read_parquet('s3://{{ bucket }}/__parse__')
     {%- endif -%}
-{%- endmacro %}
-
-{% macro fonte_lake(
-    nome_tabela,
-    nome_fonte='lake_staging',
-    filename=false,
-    union_by_name=false
-) %}
-    read_parquet(
-        '{{ caminho_fonte_lake(nome_tabela, nome_fonte) }}'
-        {%- if filename %}, filename => true{% endif -%}
-        {%- if union_by_name %}, union_by_name => true{% endif -%}
-    )
 {% endmacro %}

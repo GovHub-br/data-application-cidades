@@ -34,6 +34,11 @@ htmlcov/
 .env.local
 local.env
 
+# Variables e Connections reais do Airflow local (credenciais). Só os
+# *.example.json desta pasta são versionados.
+infra/airflow/bootstrap/variables.json
+infra/airflow/bootstrap/connections.json
+
 # Local development environments
 .dbt-venv/
 

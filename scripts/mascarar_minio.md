@@ -163,12 +163,12 @@ libera o objeto para a staging.
 
 | Variável | Obrigatória | Descrição |
 |---|---|---|
-| `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET` | sim | Conexão MinIO |
+| `DL_ENDPOINT`, `DL_ACCESS_KEY`, `DL_SECRET_KEY`, `DL_BUCKET` | sim | Conexão com o lake |
 | `DB_DW_HOST_MCID`, `DB_DW_PORT_MCID`, `DB_DW_USER_MCID`, `DB_DW_PASSWORD_MCID`, `DB_DW_DBNAME_MCID` | sim | Postgres (tabela de controle) |
 | `MASKING_HMAC_SECRET` | **sim** | Segredo do HMAC. Sem ela o script recusa rodar. |
 | `MASKING_TMPDIR` | recomendado | Dir de temporários do XLSX/MDB (CSV/TXT não usa disco). **Não use `/tmp`** se for tmpfs (RAM). |
 | `LAKE_SCHEMA` | não (default `sftp`) | Schema da tabela de controle |
-| `MASKING_PREFIX` | não (default `raw/`) | Prefixo a varrer |
+| `MASKING_PREFIX` | não (default `snh/raw/`) | Prefixo a varrer |
 | `MASKING_TOKEN_LEN` | não (default `16`) | Tamanho do token HMAC (hex chars) |
 | `MASKING_REDACTION` | não (default `***`) | Valor da redação |
 | `MASKING_PROCESSOS` | não (default núcleos − 1) | Processos do modo paralelo; `1` desliga |
@@ -225,7 +225,7 @@ e gera auditoria. Use `--apply` para efetivar.
 | `--pattern STR` | Só objetos cuja key contém `STR`. |
 | `--only-ext csv,txt` | Restringe às extensões dadas. |
 | `--max-size-mb N` | Pula objetos maiores que N MB (fatiar: pequenos primeiro). |
-| `--prefix P` | Prefixo a varrer (default `raw/`). |
+| `--prefix P` | Prefixo a varrer (default `snh/raw/`). |
 
 ---
 
