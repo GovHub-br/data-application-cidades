@@ -30,8 +30,34 @@ with
             case when fonte = 'FGTS_AO1' then 0 else 1 end,
             competencia_posicao desc nulls last
     )
+-- Colunas da prata listadas uma a uma, sem `e.*`: o CNPJ da entidade PJ (`cnpj_entidade_pj`)
+-- fica só na prata. Ele chegava aqui pelo `*` sem ninguém escolher, e a ouro não publica
+-- CNPJ (tests/linha_financiada/linha_financiada_ouro_sem_identificador_pessoal.sql).
 select
-    e.*,
+    e.id_empreendimento_linha_financiada,
+    e.codigo_empreendimento,
+    e.nome_empreendimento,
+    e.codigo_municipio,
+    e.municipio,
+    e.uf,
+    e.localidade,
+    e.objeto,
+    e.quantidade_unidades,
+    e.quantidade_unidades_concluidas,
+    e.quantidade_unidades_entregues,
+    e.percentual_obra,
+    e.competencia_posicao,
+    e.data_inicio_raw,
+    e.data_termino_raw,
+    e.data_inauguracao_raw,
+    e.latitude,
+    e.longitude,
+    e.valor_investimento_pj,
+    e.valor_contratado_pj,
+    e.situacao_contrato_pj,
+    e.entidade_pj,
+    e.fonte,
+    e.dt_silver,
     coalesce(e.municipio, c.municipio_contrato) as municipio_painel,
     coalesce(e.uf, c.uf_contrato) as uf_painel,
     coalesce(c.quantidade_contratos, 0) as quantidade_contratos,

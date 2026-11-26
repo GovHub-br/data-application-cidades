@@ -12,7 +12,7 @@ scope:
   service: Cidades
   database: cidades
   table_count: 201
-  column_count: 3756
+  column_count: 3755
   fqn_format: '{service}.{database}.{schema}.{table}'
   selection: tabelas de prata e ouro com modelo no main do data-application-cidades; medidas as que existem no PostgreSQL
     `cidades` (184); as 17 restantes entram sem relação
@@ -1738,30 +1738,6 @@ relationships:
         distinct_keys: 384
         distinct_coverage: 0.2969
       raw_value_join_matches_normalized: false
-  - id: cnpj__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj__to__prata_prata_linha_financiada_empreendimento_cnpj_entidade_pj
-    semantic_key: pessoa_juridica_cnpj
-    source: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
-    target: prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
-    join: normalized_exact
-    cardinality: many_to_many_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: exact_count
-      via_hubs:
-      - global
-      - produto
-      common_distinct_keys: 2964
-      source:
-        non_null_rows: 19709
-        distinct_keys: 2964
-        matched_rows: 19709
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-      target:
-        distinct_keys: 2964
-        distinct_coverage: 1.0
-      raw_value_join_matches_normalized: false
   - id: cnpj__ouro_ouro_rural_ficha_empreendimento_entidade_organizadora_cnpj__to__prata_prata_rural_empreendimento_entidade_organizadora_cnpj
     semantic_key: pessoa_juridica_cnpj
     source: ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
@@ -2491,10 +2467,10 @@ relationships:
         distinct_coverage: 0.8943
       raw_value_join_matches_normalized: true
     notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
-  - id: cnpj__ouro_ouro_far_ficha_empreendimento_proponente_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+  - id: cnpj__ouro_ouro_far_ficha_empreendimento_proponente_cnpj__to__prata_prata_linha_financiada_empreendimento_cnpj_entidade_pj
     semantic_key: pessoa_juridica_cnpj
     source: ouro.ouro_far_ficha_empreendimento.proponente_cnpj
-    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    target: prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
     join: normalized_exact
     cardinality: many_to_many_on_matching_population
     validation: aggregate_candidate
@@ -2507,10 +2483,10 @@ relationships:
       source_coverage_estimate: 0.3354
     notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
       entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
-  - id: cnpj__ouro_ouro_far_ficha_empreendimento_tomador_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+  - id: cnpj__ouro_ouro_far_ficha_empreendimento_tomador_cnpj__to__prata_prata_linha_financiada_empreendimento_cnpj_entidade_pj
     semantic_key: pessoa_juridica_cnpj
     source: ouro.ouro_far_ficha_empreendimento.tomador_cnpj
-    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    target: prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
     join: normalized_exact
     cardinality: many_to_many_on_matching_population
     validation: aggregate_candidate
@@ -2523,10 +2499,10 @@ relationships:
       source_coverage_estimate: 0.7068
     notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
       entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
-  - id: cnpj__prata_prata_far_cadastro_pj_construtora_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+  - id: cnpj__prata_prata_far_cadastro_pj_construtora_cnpj__to__prata_prata_linha_financiada_empreendimento_cnpj_entidade_pj
     semantic_key: pessoa_juridica_cnpj
     source: prata.prata_far_cadastro_pj.construtora_cnpj
-    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    target: prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
     join: normalized_exact
     cardinality: many_to_many_on_matching_population
     validation: aggregate_candidate
@@ -2539,10 +2515,10 @@ relationships:
       source_coverage_estimate: 0.4647
     notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
       entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
-  - id: cnpj__prata_prata_far_consolidado_proponente_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+  - id: cnpj__prata_prata_far_consolidado_proponente_cnpj__to__prata_prata_linha_financiada_empreendimento_cnpj_entidade_pj
     semantic_key: pessoa_juridica_cnpj
     source: prata.prata_far_consolidado.proponente_cnpj
-    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    target: prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
     join: normalized_exact
     cardinality: many_to_many_on_matching_population
     validation: aggregate_candidate
@@ -2555,10 +2531,10 @@ relationships:
       source_coverage_estimate: 0.3397
     notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
       entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
-  - id: cnpj__prata_prata_far_consolidado_tomador_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+  - id: cnpj__prata_prata_far_consolidado_tomador_cnpj__to__prata_prata_linha_financiada_empreendimento_cnpj_entidade_pj
     semantic_key: pessoa_juridica_cnpj
     source: prata.prata_far_consolidado.tomador_cnpj
-    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    target: prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
     join: normalized_exact
     cardinality: many_to_many_on_matching_population
     validation: aggregate_candidate
@@ -2571,10 +2547,10 @@ relationships:
       source_coverage_estimate: 0.6844
     notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
       entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
-  - id: cnpj__prata_prata_far_empreendimento_proponente_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+  - id: cnpj__prata_prata_far_empreendimento_proponente_cnpj__to__prata_prata_linha_financiada_empreendimento_cnpj_entidade_pj
     semantic_key: pessoa_juridica_cnpj
     source: prata.prata_far_empreendimento.proponente_cnpj
-    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    target: prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
     join: normalized_exact
     cardinality: many_to_many_on_matching_population
     validation: aggregate_candidate
@@ -2587,10 +2563,10 @@ relationships:
       source_coverage_estimate: 0.3354
     notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
       entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
-  - id: cnpj__prata_prata_far_empreendimento_tomador_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+  - id: cnpj__prata_prata_far_empreendimento_tomador_cnpj__to__prata_prata_linha_financiada_empreendimento_cnpj_entidade_pj
     semantic_key: pessoa_juridica_cnpj
     source: prata.prata_far_empreendimento.tomador_cnpj
-    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    target: prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
     join: normalized_exact
     cardinality: many_to_many_on_matching_population
     validation: aggregate_candidate
@@ -2784,7 +2760,7 @@ search_groups:
   - join
   - exact_search
   pii: cnpj_de_pessoa_juridica_publico
-  member_count: 30
+  member_count: 29
   members:
   - ouro.ouro_far_ficha_empreendimento.proponente_cnpj
   - ouro.ouro_far_ficha_empreendimento.tomador_cnpj
@@ -2792,7 +2768,6 @@ search_groups:
   - ouro.ouro_fds_ficha_empreendimento.cnpj_eo
   - ouro.ouro_fds_ficha_empreendimento.cnpj_eo_formatado
   - ouro.ouro_fds_panorama_entidade.cnpj_eo
-  - ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
   - ouro.ouro_rural_ficha_empreendimento.construtora_cnpj
   - ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
   - prata.prata_far_cadastro_pj.construtora_cnpj
@@ -2818,7 +2793,7 @@ search_groups:
   - prata.prata_rural_prioritarios_snh.construtora_cnpj
   members_by_schema:
     prata: 21
-    ouro: 9
+    ouro: 8
 - id: empreendimento_linha_financiada__codigo_empreendimento
   match: normalized_exact
   normalization: trim; cast bigint
