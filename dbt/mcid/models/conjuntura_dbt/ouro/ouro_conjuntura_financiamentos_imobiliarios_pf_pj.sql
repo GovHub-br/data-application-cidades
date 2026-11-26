@@ -3,7 +3,22 @@
 -- Ouro do conjuntura: Financiamentos Imobiliários PF/PJ — concessões,
 -- taxas de juros e inadimplência. Página 2/3, seção 3. Fonte: BACEN SGS
 -- (prata_conjuntura_bacen_financiamentos_imobiliarios), automatizado.
-with base as (select * from {{ ref('prata_conjuntura_bacen_financiamentos_imobiliarios') }})
+-- só as séries de crédito: a prata do BACEN também traz outras do SGS (ex.: o INCC-M,
+-- série 7456), que aqui virariam uma linha de data sem nenhum valor
+with
+    base as (
+        select *
+        from {{ ref('prata_conjuntura_bacen_financiamentos_imobiliarios') }}
+        where
+            tipo in (
+                'pf_concessoes_rs_mi',
+                'pj_concessoes_rs_mi',
+                'pf_taxa_juros_aa',
+                'pj_taxa_juros_aa',
+                'pf_inadimplencia_pct',
+                'pj_inadimplencia_pct'
+            )
+    )
 
 select
     data,

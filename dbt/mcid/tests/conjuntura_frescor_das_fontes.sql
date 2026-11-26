@@ -46,8 +46,10 @@ with
             max(make_date(ano, trimestre * 3, 1))
         from {{ ref('ouro_conjuntura_financiamentos_habitacionais') }}
         union all
-        select 'ouro_conjuntura_pib_construcao_civil', 'trimestral', max(data_referencia)
-        from {{ ref('ouro_conjuntura_pib_construcao_civil') }}
+        -- a `_pct` é a que o boletim publica e tem a data do trimestre certa (a outra
+        -- converte o período 202602 em fevereiro e acusava o PIB como parado)
+        select 'ouro_conjuntura_pib_construcao_civil_pct', 'trimestral', max(data_referencia)
+        from {{ ref('ouro_conjuntura_pib_construcao_civil_pct') }}
     ),
 
     limites as (
