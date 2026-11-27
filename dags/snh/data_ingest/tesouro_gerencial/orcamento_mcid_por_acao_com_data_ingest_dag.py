@@ -5,7 +5,6 @@ import re
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import pyarrow.parquet as pq
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
@@ -71,30 +70,32 @@ def orcamento_mcid_por_acao_com_data_ingest_dag() -> None:  # noqa: C901 - as ta
     @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(minutes=30))
     @fail_fast_on_missing_config
     def extract() -> list[str]:
-        """Os anexos ZIP do e-mail do Tesouro Gerencial do dia da execução, como chegaram.
+        """Os anexos ZIP do e-mail mais recente do Tesouro Gerencial com este assunto.
 
-        A caixa vem da Connection `tesouro_imap` (servidor IMAP no host, login e senha;
-        o remetente esperado em `sender_email` no extra). O e-mail chega de terça a sábado
-        de manhã: sem e-mail no dia, a execução é pulada. Reexecutar um dia passado busca
-        o e-mail daquele dia.
+        A caixa vem da Connection `tesouro_imap` (servidor IMAP no host, login e senha; o
+        remetente esperado em `sender_email` no extra). Não importa o dia da execução: o
+        relatório traz o ano inteiro até a véspera, então vale sempre a última atualização
+        que chegou. Se ela já foi carregada, o `upload_to_s3` pula (mesmo md5).
         """
         conn = BaseHook.get_connection(conn_id="tesouro_imap")
-        dag_run = get_current_context()["dag_run"]
-        # o dia da execução: a data lógica, que se escolhe ao disparar para um dia passado
-        moment = dag_run.logical_date or dag_run.run_after
-        day = moment.astimezone(ZoneInfo("America/Sao_Paulo")).date()
-        criteria = AND(date=day, from_=conn.extra_dejson["sender_email"], subject=SUBJECT)
+        criteria = AND(from_=conn.extra_dejson["sender_email"], subject=SUBJECT)
         paths = []
         with MailBox(conn.host).login(conn.login, conn.password) as mailbox:
-            for message in mailbox.fetch(criteria, bulk=True):  # um FETCH só (evita overquota)
-                for attachment in message.attachments:
-                    if attachment.filename.lower().endswith(".zip"):
-                        name = re.sub(r"[^A-Za-z0-9_.-]", "_", attachment.filename)
-                        path = _run_dir() / f"{len(paths) + 1:02d}_{name}"
-                        path.write_bytes(attachment.payload)
-                        paths.append(str(path))
+            # do mais novo para o mais velho; o IMAP casa o assunto por trecho, e um relatório
+            # sem dado chega como "[Não houve retorno de dados] <assunto>", sem anexo
+            for message in mailbox.fetch(criteria, reverse=True, limit=10, mark_seen=False):
+                zips = [a for a in message.attachments if a.filename.lower().endswith(".zip")]
+                if message.subject.strip() != SUBJECT or not zips:
+                    continue
+                logging.info("[tesouro] e-mail de %s com %d anexo(s)", message.date, len(zips))
+                for attachment in zips:
+                    name = re.sub(r"[^A-Za-z0-9_.-]", "_", attachment.filename)
+                    path = _run_dir() / f"{len(paths) + 1:02d}_{name}"
+                    path.write_bytes(attachment.payload)
+                    paths.append(str(path))
+                break
         if not paths:
-            raise AirflowSkipException(f"nenhum e-mail {SUBJECT!r} com ZIP em {day}")
+            raise AirflowSkipException(f"nenhum e-mail {SUBJECT!r} com ZIP na caixa")
         return paths
 
     @task(retries=2, retry_exponential_backoff=True)
