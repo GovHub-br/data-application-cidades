@@ -127,7 +127,7 @@ def sinduscon_incc() -> str:
 def pdet() -> str:
     import ftplib
 
-    with ftplib.FTP("ftp.mtps.gov.br", timeout=60) as ftp:
+    with ftplib.FTP("ftp.mtps.gov.br", timeout=60, encoding="latin-1") as ftp:
         ftp.login()
         base = "/pdet/microdados/NOVO CAGED"
         year = max(n.rsplit("/", 1)[-1] for n in ftp.nlst(base) if n.rsplit("/", 1)[-1].isdigit())
@@ -196,9 +196,9 @@ def lake(con, bucket: str, path: str, expr: str, where: str = "true") -> str:
         return f"erro: {str(exc).splitlines()[0][:60]}"
 
 
-def ouro(cur, table: str, col: str = "data_referencia") -> str:
+def ouro(cur, table: str, col: str = "data_referencia", where: str = "true") -> str:
     try:
-        cur.execute(f"select max({col})::text from ouro.{table}")
+        cur.execute(f"select max({col})::text from ouro.{table} where {where}")
         return (cur.fetchone()[0] or "vazio")[:10]
     except Exception as exc:  # noqa: BLE001
         cur.connection.rollback()
@@ -425,7 +425,8 @@ def indicadores(env: dict, sem_fonte: bool):
             None,
             (
                 "ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais",
-                "right(edicao, 4) || 'T' || left(edicao, 1)",
+                "right(edicao, 4) || 'T' || left(edicao, 1)",  # ano antes do trimestre: ordena
+                """"Lançamentos TOTAL" is not null and periodo = 'Trimestre selecionado'""",
             ),
             "—",
         ),
