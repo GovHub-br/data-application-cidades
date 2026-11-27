@@ -147,9 +147,10 @@ def tesouro(monkeypatch, tmp_path):
         def __exit__(self, *exc):
             return False
 
-        def fetch(self, criteria, bulk=False):
-            asked.append(str(criteria))
-            return inbox
+        def fetch(self, criteria, reverse=False, limit=None, mark_seen=True, bulk=False):
+            asked.append((str(criteria), reverse, mark_seen))
+            mensagens = list(reversed(inbox)) if reverse else list(inbox)  # inbox: velho -> novo
+            return mensagens[:limit] if limit else mensagens
 
     ctx = {
         "run_id": "scheduled__2026-11-24T12:00:00+00:00",
@@ -176,14 +177,26 @@ def attachment(name):
     return SimpleNamespace(filename=name, payload=b"zip")
 
 
-def test_tesouro_lands_each_zip_of_the_day(tesouro):
-    tesouro.inbox.append(
-        SimpleNamespace(attachments=[attachment("rel 1.zip"), attachment("x.pdf")])
-    )
-    tesouro.inbox.append(SimpleNamespace(attachments=[attachment("rel 1.zip")]))
+def email(subject, *names):
+    return SimpleNamespace(subject=subject, date="hoje", attachments=[attachment(n) for n in names])
+
+
+def test_tesouro_lands_the_latest_email_only(tesouro):
+    assunto = "dotacao_execucao_outras_fontes_mcid"
+    tesouro.inbox.append(email(assunto, "antigo.zip"))
+    tesouro.inbox.append(email(assunto, "rel 1.zip", "x.pdf", "rel 2.zip"))
     names = [p.rsplit("/", 1)[-1] for p in tesouro.extract()]
-    assert names == ["01_rel_1.zip", "02_rel_1.zip"]
-    assert "24-Nov-2026" in tesouro.asked[0]  # o dia em Brasília, não em UTC
+    assert names == ["01_rel_1.zip", "02_rel_2.zip"]  # só o mais novo, e só os ZIP
+    criteria, reverse, mark_seen = tesouro.asked[0]
+    assert reverse and not mark_seen and "ON" not in criteria  # sem filtro de dia
+
+
+def test_tesouro_skips_the_empty_report_variant(tesouro):
+    assunto = "dotacao_execucao_outras_fontes_mcid"
+    tesouro.inbox.append(email(assunto, "ultimo_com_dado.zip"))
+    tesouro.inbox.append(email(f"[Não houve retorno de dados] {assunto}"))
+    names = [p.rsplit("/", 1)[-1] for p in tesouro.extract()]
+    assert names == ["01_ultimo_com_dado.zip"]
 
 
 def test_tesouro_without_email_skips(tesouro):
